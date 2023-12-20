@@ -1,0 +1,8 @@
+nasbench_pytorch
+ConfigSpace
+
+torch-scatter
+torch-sparse
+torch-cluster
+torch-spline-conv
+torch-geometric
