@@ -1,5 +1,8 @@
 nasbench_pytorch
 ConfigSpace
+simplejson
+yacs
+pathvalidate
 
 torch-scatter
 torch-sparse
