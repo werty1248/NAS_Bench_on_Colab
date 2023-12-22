@@ -11,6 +11,9 @@ def get_nas_bench(bench_config: NASBenchConfig):
   elif name == 'NAS-Bench-301':
     from .nas_bench_301 import NASBench301API
     return NASBench301API(bench_config)
+  elif name == 'NAS-Bench-ASR':
+    from .nas_bench_asr import NASBenchASRAPI
+    return NASBenchASRAPI(bench_config)
   elif name in ['NDS-DARTS','NDS-Amoeba','NDS-ENAS','NDS-NASNet','NDS-PNAS']:
     from .nds import NDSAPI
     return NDSAPI(bench_config)
