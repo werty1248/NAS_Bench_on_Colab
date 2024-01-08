@@ -77,7 +77,7 @@ class NASBench101API(NASBenchAPIBase):
       return all_children
 
   def get_model(self, config):
-    spec = ModelSpec(config['matrix'], config['ops'])
+    spec = ModelSpec(config['normal']['matrix'], config['normal']['ops'])
     model = Network(spec,
                     num_labels=10,
                     in_channels=3,
@@ -98,6 +98,6 @@ class NASBench101API(NASBenchAPIBase):
     configs = []
     for arch_hash in arch_hash_list:
       metrics = self.api.get_metrics_from_hash(arch_hash)[0]
-      spec_dict = {'matrix':metrics['module_adjacency'], 'ops':metrics['module_operations']}
+      spec_dict = {"normal":{'matrix':metrics['module_adjacency'], 'ops':metrics['module_operations']}}
       configs.append(spec_dict)
     return configs

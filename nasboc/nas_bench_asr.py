@@ -50,7 +50,7 @@ class NASBenchASRAPI(NASBenchAPIBase):
     set_default_backend('torch')
 
   def query_by_config(self, config):
-    archvec = config_to_archvec(config)
+    archvec = config_to_archvec(config['normal'])
     full_info = self.api.full_info(archvec)
 
     model = self.get_model(config)
@@ -82,7 +82,7 @@ class NASBenchASRAPI(NASBenchAPIBase):
     return {'normal':{'matrix':matrix, 'ops':ops}}
 
   def get_model(self, config):
-    archvec = config_to_archvec(config)
+    archvec = config_to_archvec(config['normal'])
     model = get_model(archvec, backend = 'torch', use_rnn = DEFAULT_RNN, dropout_rate = DEFAULT_DROPOUT)
 
     return model
