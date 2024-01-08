@@ -36,7 +36,7 @@ class NASBench101API(NASBenchAPIBase):
     self.api = api.NASBench(self.filepath)
 
   def query_by_config(self, config):
-    cell = api.ModelSpec(**config)
+    cell = api.ModelSpec(**config['normal_cell'])
     metrics = self.api.query(cell)
     nparam = metrics['trainable_parameters']
     val_acc = metrics['validation_accuracy']
@@ -46,13 +46,13 @@ class NASBench101API(NASBenchAPIBase):
 
   def config2graph(self, config):
     node_feature = []
-    for op in config['ops']:
+    for op in config['normal']['ops']:
       op_index = OP_LIST.index(op)
       node_feature.append(torch.eye(len(OP_LIST))[op_index])
     node_feature = torch.stack(node_feature)
 
-    graph = Data(x=node_feature, edge_index=torch.tensor(config['matrix']).nonzero().t().contiguous())
-    return graph
+    graph = Data(x=node_feature, edge_index=torch.tensor(config['normal']['matrix']).nonzero().t().contiguous())
+    return {"normal":graph}
 
   def graph2config(self, graph):
     matrix = torch.sparse.FloatTensor(graph.edge_index, torch.ones(NUM_VERTICES).type(torch.int8), torch.Size([NUM_VERTICES,NUM_VERTICES])).to_dense().numpy()
@@ -60,7 +60,7 @@ class NASBench101API(NASBenchAPIBase):
     ops = []
     for op_index in op_index_list:
       ops.append(OP_LIST[op_index])
-    return {'matrix':matrix, 'ops':ops}
+    return {"normal":{'matrix':matrix, 'ops':ops}}
 
   def _get_children(self, model):
       children = list(model.children())

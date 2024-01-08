@@ -65,12 +65,12 @@ class NASBenchASRAPI(NASBenchAPIBase):
 
   def config2graph(self, config):
     node_feature = []
-    for op in config['ops']:
+    for op in config['normal']['ops']:
       op_index = OP_LIST.index(op)
       node_feature.append(torch.eye(len(OP_LIST))[op_index])
     node_feature = torch.stack(node_feature)
 
-    graph = Data(x=node_feature, edge_index=torch.tensor(config['matrix']).nonzero().t().contiguous())
+    graph = Data(x=node_feature, edge_index=torch.tensor(config['normal']['matrix']).nonzero().t().contiguous())
     return graph
 
   def graph2config(self, graph):
@@ -79,7 +79,7 @@ class NASBenchASRAPI(NASBenchAPIBase):
     ops = []
     for op_index in op_index_list:
       ops.append(OP_LIST[op_index])
-    return {'matrix':matrix, 'ops':ops}
+    return {'normal':{'matrix':matrix, 'ops':ops}}
 
   def get_model(self, config):
     archvec = config_to_archvec(config)
@@ -93,6 +93,6 @@ class NASBenchASRAPI(NASBenchAPIBase):
 
     for arch in archs:
       matrix, ops = get_model_graph(arch)[1]
-      config = {'matrix':matrix.astype(np.int64), 'ops':ops}
+      config = {'normal':{'matrix':matrix.astype(np.int64), 'ops':ops}}
       configs.append(config)
     return configs

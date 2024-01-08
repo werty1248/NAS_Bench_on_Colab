@@ -57,12 +57,12 @@ class NASBench201API(NASBenchAPIBase):
     for op_str in arch_str:
       ops.append(op_str[:-2])
     ops += ['output']
-    return {'matrix':matrix, 'ops':ops}
+    return {"normal":{'matrix':matrix, 'ops':ops}}
 
   @staticmethod
   def config2str(config):
     arch_str = ""
-    ops = config['ops'][1:-1]
+    ops = config['normal']['ops'][1:-1]
     i = 0
     for out_block in range(3):
       for in_block in range(out_block+1):
@@ -89,12 +89,12 @@ class NASBench201API(NASBenchAPIBase):
 
   def config2graph(self, config):
     node_feature = []
-    for op in config['ops']:
+    for op in config['normal']['ops']:
       op_index = OP_LIST.index(op)
       node_feature.append(torch.eye(len(OP_LIST)).type(torch.LongTensor)[op_index])
     node_feature = torch.stack(node_feature)
 
-    graph = Data(x=node_feature, edge_index=torch.tensor(config['matrix']).nonzero().t().contiguous())
+    graph = Data(x=node_feature, edge_index=torch.tensor(config['normal']['matrix']).nonzero().t().contiguous())
     return graph
 
   def graph2config(self, graph):
@@ -103,7 +103,7 @@ class NASBench201API(NASBenchAPIBase):
     ops = []
     for op_index in op_index_list:
       ops.append(OP_LIST[op_index])
-    return {'matrix':matrix, 'ops':ops}
+    return {'normal':{'matrix':matrix, 'ops':ops}}
 
   def get_model(self, config):
     #config to nb201_config
