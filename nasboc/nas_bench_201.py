@@ -34,16 +34,18 @@ class NASBench201API(NASBenchAPIBase):
     super(NASBench201API, self).__init__()
 
     self.bench_config = bench_config
-    self.filepath = os.path.join(self.bench_config.filepath, 'NAS-Bench-201-v1_0-e61699.pth')
+    self.filepath = os.path.join(self.bench_config.filepath, 'NAS-Bench-201-v1_1-096897.pth')
     self.api = api(self.filepath, verbose=False)
     
     self.num_classes = NUM_CLASSES[self.bench_config.dataset]
     if self.bench_config.dataset == 'cifar10':
       self.dataset = 'cifar10-valid'
+      self.train_name = 'train'
       self.val_name = 'x-valid'
       self.test_name = 'ori-test'
     else:
       self.dataset = self.bench_config.dataset
+      self.train_name = 'train'
       self.val_name = 'x-valid'
       self.test_name = 'x-test'
   
@@ -77,13 +79,13 @@ class NASBench201API(NASBenchAPIBase):
     arch_index = self.api.archstr2index[arch_str]
 
     metadata = self.api.query_meta_info_by_index(arch_index, hp='200')
-    nparam = metadata.get_compute_costs('cifar10-valid')['params']
-    nparam = nparam * 1e+6
+    nparam = metadata.get_compute_costs(self.dataset)['params']
+    nparam = int(nparam * 1e+6)
 
     val_acc = metadata.get_metrics(self.dataset, self.val_name)['accuracy']
     test_acc = metadata.get_metrics(self.dataset, self.test_name)['accuracy']
 
-    train_time = self.api.get_more_info(arch_index, 'cifar10-valid', None)['train-per-time']
+    train_time = self.api.get_more_info(arch_index, self.dataset, None)['train-all-time']
 
     return {'nparam':nparam, 'val_acc':val_acc, 'test_acc':test_acc, 'training_time':train_time}
 
