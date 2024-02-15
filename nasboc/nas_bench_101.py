@@ -36,7 +36,7 @@ class NASBench101API(NASBenchAPIBase):
     self.api = api.NASBench(self.filepath)
 
   def query_by_config(self, config):
-    cell = api.ModelSpec(**config['normal_cell'])
+    cell = api.ModelSpec(**config['normal'])
     metrics = self.api.query(cell)
     nparam = metrics['trainable_parameters']
     val_acc = metrics['validation_accuracy']
