@@ -28,6 +28,9 @@ ALLOWED_EDGES = [0, 1]   # Binary adjacency matrix
 OP_LIST = [INPUT,CONV3X3, CONV1X1, MAXPOOL3X3, OUTPUT]
 
 class NASBench101API(NASBenchAPIBase):
+  OP_LIST = [INPUT,CONV3X3, CONV1X1, MAXPOOL3X3, OUTPUT]
+  NUM_VERTICES = 7
+  MAX_EDGES = 9
   def __init__(self, bench_config):
     super(NASBench101API, self).__init__()
 
@@ -47,8 +50,8 @@ class NASBench101API(NASBenchAPIBase):
   def config2graph(self, config):
     node_feature = []
     for op in config['normal']['ops']:
-      op_index = OP_LIST.index(op)
-      node_feature.append(torch.eye(len(OP_LIST))[op_index])
+      op_index = self.OP_LIST.index(op)
+      node_feature.append(torch.eye(len(self.OP_LIST))[op_index])
     node_feature = torch.stack(node_feature)
 
     graph = Data(x=node_feature, edge_index=torch.tensor(config['normal']['matrix']).nonzero().t().contiguous())

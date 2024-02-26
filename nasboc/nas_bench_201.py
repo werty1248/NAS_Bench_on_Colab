@@ -30,6 +30,10 @@ OP_SPOTS = NUM_VERTICES - 2   # Input/output vertices are fixed
 NUM_CLASSES = {'cifar10':10, 'cifar100':100, 'ImageNet16-120':120}
 
 class NASBench201API(NASBenchAPIBase):
+  NUM_VERTICES = 8
+  MAX_EDGES = 10
+  OP_LIST = ['input', 'nor_conv_1x1', 'nor_conv_3x3', 'avg_pool_3x3', 'skip_connect', 'none', 'output']
+
   def __init__(self, bench_config):
     super(NASBench201API, self).__init__()
 
@@ -92,19 +96,19 @@ class NASBench201API(NASBenchAPIBase):
   def config2graph(self, config):
     node_feature = []
     for op in config['normal']['ops']:
-      op_index = OP_LIST.index(op)
-      node_feature.append(torch.eye(len(OP_LIST)).type(torch.LongTensor)[op_index])
+      op_index = self.OP_LIST.index(op)
+      node_feature.append(torch.eye(len(self.OP_LIST)).type(torch.LongTensor)[op_index])
     node_feature = torch.stack(node_feature)
 
     graph = Data(x=node_feature, edge_index=torch.tensor(config['normal']['matrix']).nonzero().t().contiguous())
     return graph
 
   def graph2config(self, graph):
-    matrix = torch.sparse.FloatTensor(graph.edge_index, torch.ones(NUM_VERTICES).type(torch.int8), torch.Size([NUM_VERTICES,NUM_VERTICES])).to_dense().numpy()
+    matrix = torch.sparse.FloatTensor(graph.edge_index, torch.ones(self.NUM_VERTICES).type(torch.int8), torch.Size([self.NUM_VERTICES,self.NUM_VERTICES])).to_dense().numpy()
     op_index_list = graph.x.nonzero().t().contiguous()[1,:]
     ops = []
     for op_index in op_index_list:
-      ops.append(OP_LIST[op_index])
+      ops.append(self.OP_LIST[op_index])
     return {'normal':{'matrix':matrix, 'ops':ops}}
 
   def get_model(self, config):

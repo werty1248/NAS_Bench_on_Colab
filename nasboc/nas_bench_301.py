@@ -64,6 +64,9 @@ def random_genotype(num_block = 4, concat_type = 'all', same_reduce = False):
                   reduce = reduce, reduce_concat = reduce_concat)
 
 class NASBench301API(NASBenchAPIBase):
+  OP_LIST   =[INPUT1, INPUT2, AVGPOOL3X3, MAXPOOL3X3, SKIP_CONNECT, SEPCONV3X3, SEPCONV5X5, DILCONV3X3, DILCONV5X5, OUTPUT]
+  NUM_VERTICES = 11
+
   def __init__(self, bench_config, version = '1.0'):
     super(NASBench301API, self).__init__()
 
@@ -104,28 +107,34 @@ class NASBench301API(NASBenchAPIBase):
     ensemble_dir_runtime = model_paths['lgb_runtime']
     self.runtime_model = nb.load_ensemble(ensemble_dir_runtime)
 
-  def query_by_config(self, config):
+  def query_by_config(self, config, noise = True):
     model = self.get_model(config)
     model_parameters = filter(lambda p: p.requires_grad, model.parameters())
     nparam = sum([np.prod(p.size()) for p in model_parameters])
     del model
 
-    genotype = config_to_genotype(config, NUM_VERTICES, OP_LIST)
+    genotype = config_to_genotype(config, self.NUM_VERTICES, self.OP_LIST)
 
-    val_acc = self.performance_model.predict(config=genotype, representation="genotype", with_noise=True)
+    val_acc = self.performance_model.predict(config=genotype, representation="genotype", with_noise=noise)
     test_acc = val_acc
 
     train_time = self.runtime_model.predict(config=genotype, representation="genotype")
 
     return {'nparam':nparam, 'val_acc':val_acc, 'test_acc':test_acc, 'training_time':train_time}
 
+  def config2genotype(self, config):
+    return config_to_genotype(config, self.NUM_VERTICES, self.OP_LIST)
+    
+  def genotype2config(self, genotype):
+    return genotype_to_config(genotype, self.NUM_VERTICES, self.OP_LIST)
+
   def config2graph(self, config):
     graphs = {}
     for cell_name in ['normal','reduce']:
       node_feature = []
       for op in config[cell_name]['ops']:
-        op_index = OP_LIST.index(op)
-        node_feature.append(torch.eye(len(OP_LIST)).type(torch.LongTensor)[op_index])
+        op_index = self.OP_LIST.index(op)
+        node_feature.append(torch.eye(len(self.OP_LIST)).type(torch.LongTensor)[op_index])
       node_feature = torch.stack(node_feature)
 
       graph = Data(x=node_feature, edge_index=torch.tensor(config[cell_name]['matrix']).nonzero().t().contiguous())
@@ -135,17 +144,17 @@ class NASBench301API(NASBenchAPIBase):
   def graph2config(self, graphs):
     config = {}
     for cell_name, graph in graphs.item():
-      matrix = torch.sparse.FloatTensor(graph.edge_index, torch.ones(NUM_VERTICES).type(torch.int8), torch.Size([NUM_VERTICES,NUM_VERTICES])).to_dense().numpy()
+      matrix = torch.sparse.FloatTensor(graph.edge_index, torch.ones(self.NUM_VERTICES).type(torch.int8), torch.Size([self.NUM_VERTICES,self.NUM_VERTICES])).to_dense().numpy()
       op_index_list = graph.x.nonzero().t().contiguous()[1,:]
       ops = []
       for op_index in op_index_list:
-        ops.append(OP_LIST[op_index])
+        ops.append(self.OP_LIST[op_index])
       config[cell_name] = {'matrix':matrix, 'ops':ops}
 
     return config
 
   def get_model(self, config):
-    genotype = config_to_genotype(config, NUM_VERTICES, OP_LIST)
+    genotype = self.config2genotype(config)
     network = NetworkCIFAR(DEFAULT_WIDTH, NUM_CLASSES, DEFAULT_DEPTH, DEFAULT_AUX,  genotype)
     network.drop_path_prob = 0.
 
@@ -156,7 +165,7 @@ class NASBench301API(NASBenchAPIBase):
     
     for i in range(num_sample):
       genotype = random_genotype(NUM_BLOCK, CONCAT_TYPE)
-      config = genotype_to_config(genotype, NUM_VERTICES, OP_LIST)
+      config = genotype_to_config(genotype, self.NUM_VERTICES, self.OP_LIST)
       configs.append(config)
 
     return configs
