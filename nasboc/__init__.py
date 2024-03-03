@@ -17,5 +17,8 @@ def get_nas_bench(bench_config: NASBenchConfig):
   elif name in ['NDS-DARTS','NDS-Amoeba','NDS-ENAS','NDS-NASNet','NDS-PNAS']:
     from .nds import NDSAPI
     return NDSAPI(bench_config)
+  elif name == 'TransNASBench':
+    from .trans_nas_bench import TransNASBenchAPI
+    return TransNASBenchAPI(bench_config)
   else:
     raise KeyError(name)
