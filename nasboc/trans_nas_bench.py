@@ -3,7 +3,6 @@
 import argparse
 import numpy as np
 
-OP_LIST = ['input', 'nor_conv_1x1', 'nor_conv_3x3', 'avg_pool_3x3', 'skip_connect', 'none', 'output']
 ADJ_MATRIX = np.array([[0, 1, 1, 0, 1, 0, 0, 0],
                        [0, 0, 0, 1, 0, 1 ,0 ,0],
                        [0, 0, 0, 0, 0, 0, 1, 0],
@@ -27,7 +26,7 @@ class TransNASBenchAPI(NASBenchAPIBase):
   NUM_VERTICES = 8
   MAX_EDGES = 10
   TASK_LIST = ['class_scene', 'class_object', 'room_layout', 'jigsaw', 'segmentsemantic', 'normal', 'autoencoder']
-  OP_LIST = ['input', 'skip_connect', 'none', 'nor_conv_1x1', 'nor_conv_3x3', 'output']
+  OP_LIST = ['input', 'none', 'skip_connect', 'nor_conv_1x1', 'nor_conv_3x3', 'output']
   METRIC_DICT = {'class_scene':'top1', 'class_object':'top1', 'room_layout':'loss',
                 'jigsaw':'top1', 'segmentsemantic':'mIoU', 'normal':'ssim', 'autoencoder':'ssim'}
 
