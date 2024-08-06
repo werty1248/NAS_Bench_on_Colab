@@ -20,6 +20,7 @@ from torch_geometric.data import Data
 from nas_201_api import NASBench201API as api
 from xautodl.models import get_cell_based_tiny_net, get_search_spaces
 import copy
+from tqdm.auto import tqdm
 
 from nasboc.base import NASBenchAPIBase
 
@@ -40,7 +41,10 @@ class NASBench201API(NASBenchAPIBase):
 
     self.bench_config = bench_config
     self.filepath = os.path.join(self.bench_config.filepath, 'NAS-Bench-201-v1_1-096897.pth')
+    self.hash_table_path = os.path.join(self.bench_config.filepath, 'nb201_hash_table.pt')
+      
     self.api = api(self.filepath, verbose=False)
+    self.hash_table = torch.load(self.hash_table_path)
     
     self.num_classes = NUM_CLASSES[self.bench_config.dataset]
     if self.bench_config.dataset == 'cifar10':
@@ -53,6 +57,9 @@ class NASBench201API(NASBenchAPIBase):
       self.train_name = 'train'
       self.val_name = 'x-valid'
       self.test_name = 'x-test'
+  
+    self.regularize()
+
   
   @staticmethod
   def str2config(arch_str):
@@ -79,7 +86,30 @@ class NASBench201API(NASBenchAPIBase):
       arch_str += "|+"
     return arch_str[:-1]
 
-  def query_by_config(self, config):
+  def regularize(self, verbose = True):
+    self.new_query_table = {}
+    if verbose:
+      iter = tqdm(self.hash_table.items())
+    else:
+      iter = self.hash_table.items()
+    for key, arch_list in iter:
+      nparam = 0
+      val_acc = []
+      test_acc = []
+      training_time = []
+      for arch in arch_list:
+        query = self._query_by_config(arch)
+        val_acc.append(query['val_acc'])
+        test_acc.append(query['test_acc'])
+        self.new_query_table[str(arch)] = {'nparam':query['nparam'], 'val_acc':query['val_acc'], 'test_acc':query['test_acc'], 'training_time':query['training_time']}
+        
+      val_acc = np.mean(val_acc)
+      test_acc = np.mean(test_acc)
+      for arch in arch_list:
+        self.new_query_table[str(arch)]['val_acc'] = val_acc
+        self.new_query_table[str(arch)]['test_acc'] = test_acc
+
+  def _query_by_config(self, config):
     arch_str = self.config2str(config)
     arch_index = self.api.archstr2index[arch_str]
 
@@ -93,6 +123,9 @@ class NASBench201API(NASBenchAPIBase):
     train_time = self.api.get_more_info(arch_index, self.dataset, None)['train-all-time']
 
     return {'nparam':nparam, 'val_acc':val_acc, 'test_acc':test_acc, 'training_time':train_time}
+      
+  def query_by_config(self, config):
+    return self.new_query_table[str(config)]
 
   def config2graph(self, config):
     node_feature = []

@@ -8,6 +8,9 @@ def get_nas_bench(bench_config: NASBenchConfig):
   elif name == 'NAS-Bench-201':
     from .nas_bench_201 import NASBench201API
     return NASBench201API(bench_config)
+  elif name == 'NAS-Bench-201-Reg':
+    from .nas_bench_201_reg import NASBench201API
+    return NASBench201API(bench_config)
   elif name == 'NAS-Bench-301':
     from .nas_bench_301 import NASBench301API
     return NASBench301API(bench_config)
